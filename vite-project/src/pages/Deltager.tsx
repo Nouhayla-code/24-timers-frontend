@@ -10,7 +10,7 @@ interface Deltager {
 }
 
 const DeltagerKomponent: React.FC = () => {
-  const [data, setData] = useState<Deltager[]>([]);
+  const [deltagere, setDeltagere] = useState<Deltager[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<Deltager>({
@@ -32,7 +32,7 @@ const DeltagerKomponent: React.FC = () => {
           );
         }
         const result = await response.json();
-        setData(result);
+        setDeltagere(result);
       } catch (error) {
         setError(error.message);
         console.error("Fetching data failed:", error);
@@ -40,6 +40,16 @@ const DeltagerKomponent: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  // Function to create or update a participant
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (formData.id) {
+      await updateDeltager();
+    } else {
+      await createDeltager();
+    }
+  };
 
   // Function to create a new participant
   const createDeltager = async () => {
@@ -55,7 +65,7 @@ const DeltagerKomponent: React.FC = () => {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
       const newDeltager: Deltager = await response.json();
-      setData([...data, newDeltager]);
+      setDeltagere([...deltagere, newDeltager]);
       setShowModal(false); // Close modal after creation
       resetFormData(); // Reset form data after creation
     } catch (error) {
@@ -78,10 +88,10 @@ const DeltagerKomponent: React.FC = () => {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
       const updatedDeltager: Deltager = await response.json();
-      const updatedDataArray = data.map((deltager) =>
+      const updatedDataArray = deltagere.map((deltager) =>
         deltager.id === id ? updatedDeltager : deltager
       );
-      setData(updatedDataArray);
+      setDeltagere(updatedDataArray);
       setShowModal(false); // Close modal after update
       resetFormData(); // Reset form data after update
     } catch (error) {
@@ -98,7 +108,7 @@ const DeltagerKomponent: React.FC = () => {
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
-      setData(data.filter((deltager) => deltager.id !== id));
+      setDeltagere(deltagere.filter((deltager) => deltager.id !== id));
     } catch (error) {
       console.error("Error deleting deltager:", error);
     }
@@ -152,9 +162,9 @@ const DeltagerKomponent: React.FC = () => {
       {error && <p className="text-red-500 mb-4">{`Fejl: ${error}`}</p>}
 
       {/* Display data if fetched */}
-      {data.length > 0 ? (
+      {deltagere.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((deltager) => (
+          {deltagere.map((deltager) => (
             <div
               key={deltager.id}
               className="bg-white border border-gray-300 shadow-md rounded-lg p-4 flex flex-col justify-between"
@@ -198,7 +208,7 @@ const DeltagerKomponent: React.FC = () => {
       <Modal
         showModal={showModal}
         toggleModal={toggleModal}
-        handleSubmit={formData.id ? updateDeltager : createDeltager}
+        handleSubmit={handleSubmit}
         handleInputChange={handleInputChange}
         formData={formData}
       />

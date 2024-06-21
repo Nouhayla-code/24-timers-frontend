@@ -4,19 +4,25 @@ interface DisciplinType {
   id: string;
   navn: string;
   resultattype: string;
+  deltagerIds: string[];
+}
+
+interface DeltagerType {
+  id: string;
+  navn: string;
 }
 
 const DisciplinKomponent: React.FC = () => {
   const [data, setData] = useState<DisciplinType[] | null>(null);
+  const [deltagere, setDeltagere] = useState<DeltagerType[] | null>(null); // State for existing deltagere
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false); // State for modal visibility
-  const [newDisciplin, setNewDisciplin] = useState({
-    navn: "",
-    resultattype: "",
-  });
+  const [selectedDeltagerIds, setSelectedDeltagerIds] = useState<string[]>([]); // State for selected deltagere
+  const [currentDisciplinId, setCurrentDisciplinId] = useState<string>(""); // State to track current disciplin id
 
   useEffect(() => {
     fetchData();
+    fetchDeltagere(); // Fetch existing deltagere
   }, []);
 
   const fetchData = async () => {
@@ -29,77 +35,67 @@ const DisciplinKomponent: React.FC = () => {
       setData(result);
     } catch (error) {
       setError(error.message);
-      console.error("Fetching data failed:", error);
+      console.error("Fetching discipliner failed:", error);
     }
   };
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
-  };
-
-  const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = event.target;
-    setNewDisciplin({
-      ...newDisciplin,
-      [name]: value,
-    });
-  };
-
-  const createDisciplin = async () => {
+  const fetchDeltagere = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/disciplin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newDisciplin),
-      });
+      const response = await fetch("http://localhost:8080/api/deltager");
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
-      await fetchData(); // Refresh data after creation
-      toggleModal(); // Close modal after creation
-      setNewDisciplin({
-        navn: "",
-        resultattype: "",
-      }); // Reset form
+      const result = await response.json();
+      setDeltagere(result);
     } catch (error) {
-      console.error("Error creating disciplin:", error);
+      setError(error.message);
+      console.error("Fetching deltagere failed:", error);
     }
   };
 
-  const deleteDisciplin = async (id: string) => {
+  const toggleModal = (disciplinId: string) => {
+    setShowModal(!showModal);
+    setCurrentDisciplinId(disciplinId);
+  };
+
+  const handleDeltagerChange = (deltagerId: string) => {
+    const isSelected = selectedDeltagerIds.includes(deltagerId);
+    if (isSelected) {
+      setSelectedDeltagerIds(
+        selectedDeltagerIds.filter((id) => id !== deltagerId)
+      );
+    } else {
+      setSelectedDeltagerIds([...selectedDeltagerIds, deltagerId]);
+    }
+  };
+
+  const addDeltagerToDisciplin = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/disciplin/${id}`,
+        `http://localhost:8080/api/disciplin/${currentDisciplinId}/addDeltager`,
         {
-          method: "DELETE",
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(selectedDeltagerIds),
         }
       );
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
-      await fetchData(); // Refresh data after deletion
+      await fetchData(); // Refresh data after adding deltagere to disciplin
+      setSelectedDeltagerIds([]); // Clear selected deltagere after successful addition
+      toggleModal(""); // Close modal after adding deltagere
     } catch (error) {
-      console.error("Error deleting disciplin:", error);
+      console.error("Error adding deltagere to disciplin:", error);
+      setError(error.message); // Set state to show error to user
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Discipliner</h1>
-
-      {/* Add Disciplin Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={toggleModal}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Tilføj Disciplin
-        </button>
-      </div>
 
       {error && <p className="text-red-500 mb-4">{`Fejl: ${error}`}</p>}
       {data ? (
@@ -115,10 +111,10 @@ const DisciplinKomponent: React.FC = () => {
               <p className="text-gray-600">{disciplin.resultattype}</p>
               <div className="flex justify-end mt-4">
                 <button
-                  onClick={() => deleteDisciplin(disciplin.id)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={() => toggleModal(disciplin.id)}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2"
                 >
-                  SLET
+                  Tilføj Deltager
                 </button>
               </div>
             </div>
@@ -128,53 +124,42 @@ const DisciplinKomponent: React.FC = () => {
         <p className="text-gray-600 text-center">Indlæser...</p>
       )}
 
-      {/* Modal/Dialog for Adding Discipline */}
+      {/* Modal/Dialog for Selecting Deltager */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
           <div className="relative w-auto max-w-3xl mx-auto my-6">
-            {/* Modal content */}
             <div className="bg-white rounded-lg shadow-lg">
               <div className="p-4">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                  Tilføj Disciplin
+                  Tilføj Deltager til Disciplin
                 </h2>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Navn:
-                  </label>
-                  <input
-                    type="text"
-                    name="navn"
-                    value={newDisciplin.navn}
-                    onChange={handleInputChange}
-                    className="px-3 py-2 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring focus:ring-blue-400 focus:ring-opacity-50 w-full"
-                    placeholder="Indtast navn"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Resultattype:
-                  </label>
-                  <input
-                    type="text"
-                    name="resultattype"
-                    value={newDisciplin.resultattype}
-                    onChange={handleInputChange}
-                    className="px-3 py-2 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring focus:ring-blue-400 focus:ring-opacity-50 w-full"
-                    placeholder="Indtast resultattype"
-                    required
-                  />
-                </div>
+                {deltagere ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {deltagere.map((deltager) => (
+                      <div key={deltager.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={deltager.id}
+                          checked={selectedDeltagerIds.includes(deltager.id)}
+                          onChange={() => handleDeltagerChange(deltager.id)}
+                          className="mr-2"
+                        />
+                        <label htmlFor={deltager.id}>{deltager.navn}</label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">Fetching deltagere...</p>
+                )}
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={toggleModal}
+                    onClick={() => toggleModal("")}
                     className="bg-gray-400 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2"
                   >
                     Annuller
                   </button>
                   <button
-                    onClick={createDisciplin}
+                    onClick={addDeltagerToDisciplin}
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   >
                     Gem

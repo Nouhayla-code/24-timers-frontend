@@ -3,7 +3,7 @@ import React from "react";
 interface ModalProps {
   showModal: boolean;
   toggleModal: () => void;
-  handleSubmit: () => void;
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   handleInputChange: (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
@@ -23,23 +23,35 @@ const Modal: React.FC<ModalProps> = ({
   handleInputChange,
   formData,
 }) => {
+  // Close modal on outside click (backdrop click)
+  const handleBackdropClick = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    if (e.target === e.currentTarget) {
+      toggleModal();
+    }
+  };
+
   return (
     <div>
       {/* Modal/Dialog for Adding or Editing Deltager */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-          <div className="relative w-auto max-w-lg mx-auto my-6">
-            <form onSubmit={handleSubmit}>
-              <div className="bg-white rounded-lg shadow-lg border border-gray-300">
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                    {formData.id ? "Rediger Deltager" : "Tilføj Deltager"}
-                  </h2>
-                  {/* Form Inputs */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto">
+          <div
+            className="relative w-auto max-w-lg mx-auto my-6"
+            onClick={handleBackdropClick}
+          >
+            <div className="bg-white rounded-lg shadow-lg border border-gray-300">
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                  {formData.id ? "Rediger Deltager" : "Tilføj Deltager"}
+                </h2>
+                {/* Form Inputs */}
+                <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label
-                      className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="navn"
+                      className="block text-gray-700 text-sm font-bold mb-2"
                     >
                       Navn:
                     </label>
@@ -47,26 +59,26 @@ const Modal: React.FC<ModalProps> = ({
                       type="text"
                       id="navn"
                       name="navn"
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      placeholder="Indtast navn"
                       value={formData.navn}
                       onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      placeholder="Indtast navn"
                       required
                     />
                   </div>
                   <div className="mb-4">
                     <label
-                      className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="kon"
+                      className="block text-gray-700 text-sm font-bold mb-2"
                     >
                       Køn:
                     </label>
                     <select
                       id="kon"
                       name="kon"
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       value={formData.kon}
                       onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       required
                     >
                       <option value="">Vælg køn</option>
@@ -77,8 +89,8 @@ const Modal: React.FC<ModalProps> = ({
                   </div>
                   <div className="mb-4">
                     <label
-                      className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="alder"
+                      className="block text-gray-700 text-sm font-bold mb-2"
                     >
                       Alder:
                     </label>
@@ -86,17 +98,17 @@ const Modal: React.FC<ModalProps> = ({
                       type="number"
                       id="alder"
                       name="alder"
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      placeholder="Indtast alder"
                       value={formData.alder}
                       onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      placeholder="Indtast alder"
                       required
                     />
                   </div>
                   <div className="mb-4">
                     <label
-                      className="block text-gray-700 text-sm font-bold mb-2"
                       htmlFor="klub"
+                      className="block text-gray-700 text-sm font-bold mb-2"
                     >
                       Klub:
                     </label>
@@ -104,10 +116,10 @@ const Modal: React.FC<ModalProps> = ({
                       type="text"
                       id="klub"
                       name="klub"
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      placeholder="Indtast klub"
                       value={formData.klub}
                       onChange={handleInputChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      placeholder="Indtast klub"
                       required
                     />
                   </div>
@@ -126,9 +138,9 @@ const Modal: React.FC<ModalProps> = ({
                       Gem
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
