@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import Deltager from "./pages/Deltager";
 import Discipliner from "./pages/Discipliner";
 
