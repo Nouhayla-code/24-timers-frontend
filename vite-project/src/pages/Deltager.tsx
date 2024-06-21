@@ -13,15 +13,15 @@ const DeltagerKomponent: React.FC = () => {
   const [data, setData] = useState<Deltager[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Deltager>({
     id: "",
     navn: "",
     kon: "",
-    alder: "",
+    alder: 0,
     klub: "",
   });
 
-  // Hent alle deltagerne fra backend
+  // Fetch all participants from the backend
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -41,7 +41,7 @@ const DeltagerKomponent: React.FC = () => {
     fetchData();
   }, []);
 
-  // Funktion til at oprette en ny deltager
+  // Function to create a new participant
   const createDeltager = async () => {
     try {
       const response = await fetch("http://localhost:8080/api/deltager", {
@@ -56,23 +56,17 @@ const DeltagerKomponent: React.FC = () => {
       }
       const newDeltager: Deltager = await response.json();
       setData([...data, newDeltager]);
-      setShowModal(false); // Luk modal efter oprettelse
-      resetFormData(); // Nulstil form data efter oprettelse
+      setShowModal(false); // Close modal after creation
+      resetFormData(); // Reset form data after creation
     } catch (error) {
       console.error("Error creating deltager:", error);
     }
   };
 
-  // Funktion til at opdatere en deltager
-  const updateDeltager = async (id: string) => {
+  // Function to update a participant
+  const updateDeltager = async () => {
     try {
-      const updatedData = {
-        navn: formData.navn,
-        kon: formData.kon,
-        alder: parseInt(formData.alder),
-        klub: formData.klub,
-      };
-
+      const { id, ...updatedData } = formData;
       const response = await fetch(`http://localhost:8080/api/deltager/${id}`, {
         method: "PUT",
         headers: {
@@ -80,27 +74,22 @@ const DeltagerKomponent: React.FC = () => {
         },
         body: JSON.stringify(updatedData),
       });
-
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.statusText}`);
       }
-
       const updatedDeltager: Deltager = await response.json();
-
-      // Update local state data array with updatedDeltager
       const updatedDataArray = data.map((deltager) =>
         deltager.id === id ? updatedDeltager : deltager
       );
-
-      setData(updatedDataArray); // Update state with updated data
-      setShowModal(false); // Close modal after successful update
-      resetFormData(); // Nulstil form data efter opdatering
+      setData(updatedDataArray);
+      setShowModal(false); // Close modal after update
+      resetFormData(); // Reset form data after update
     } catch (error) {
       console.error("Error updating deltager:", error);
     }
   };
 
-  // Funktion til at slette en deltager
+  // Function to delete a participant
   const deleteDeltager = async (id: string) => {
     try {
       const response = await fetch(`http://localhost:8080/api/deltager/${id}`, {
@@ -115,12 +104,12 @@ const DeltagerKomponent: React.FC = () => {
     }
   };
 
-  // Skift modalens synlighed
+  // Toggle modal visibility
   const toggleModal = () => {
     setShowModal(!showModal);
   };
 
-  // Håndter ændringer i inputfelter
+  // Handle changes in input fields
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -128,22 +117,28 @@ const DeltagerKomponent: React.FC = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Nulstil form data
+  // Reset form data
   const resetFormData = () => {
     setFormData({
       id: "",
       navn: "",
       kon: "",
-      alder: "",
+      alder: 0,
       klub: "",
     });
+  };
+
+  // Open modal to edit a participant
+  const editDeltager = (deltager: Deltager) => {
+    setFormData({ ...deltager });
+    setShowModal(true);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Deltagere</h1>
 
-      {/* Tilføj deltager knap */}
+      {/* Add participant button */}
       <div className="flex justify-end mt-4">
         <button
           onClick={toggleModal}
@@ -153,10 +148,10 @@ const DeltagerKomponent: React.FC = () => {
         </button>
       </div>
 
-      {/* Vis fejlbesked hvis der er fejl */}
+      {/* Display error message if there is an error */}
       {error && <p className="text-red-500 mb-4">{`Fejl: ${error}`}</p>}
 
-      {/* Vis data hvis det er blevet hentet */}
+      {/* Display data if fetched */}
       {data.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.map((deltager) => (
@@ -181,7 +176,7 @@ const DeltagerKomponent: React.FC = () => {
               <div className="mt-4">
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded"
-                  onClick={() => updateDeltager(deltager.id)}
+                  onClick={() => editDeltager(deltager)}
                 >
                   REDIGER
                 </button>
@@ -199,13 +194,11 @@ const DeltagerKomponent: React.FC = () => {
         <p className="text-gray-600 text-center">Indlæser...</p>
       )}
 
-      {/* Modal komponent for at tilføje eller redigere en deltager */}
+      {/* Modal component for adding or editing a participant */}
       <Modal
         showModal={showModal}
         toggleModal={toggleModal}
-        handleSubmit={
-          formData.id ? () => updateDeltager(formData.id) : createDeltager
-        }
+        handleSubmit={formData.id ? updateDeltager : createDeltager}
         handleInputChange={handleInputChange}
         formData={formData}
       />
