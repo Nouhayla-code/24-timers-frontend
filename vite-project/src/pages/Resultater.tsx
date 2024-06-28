@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 
+// Definerer en funktionel komponent ved hjælp af React.FC
 const ResultatKomponent: React.FC = () => {
   interface ResultatDto {
     id: string;
@@ -11,6 +12,7 @@ const ResultatKomponent: React.FC = () => {
     disciplinId: string; // Assuming disciplinId is a string
   }
 
+  // der angiver, at state-variablen error kan være af typen string eller null.
   const [data, setData] = useState<ResultatDto[] | null>(null);
   const [filteredData, setFilteredData] = useState<ResultatDto[]>([]);
   const [error, setError] = useState<string | null>(null);

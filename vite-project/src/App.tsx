@@ -2,6 +2,7 @@ import React from "react";
 import Deltager from "./pages/Deltager";
 import Discipliner from "./pages/Discipliner";
 import Resultater from "./pages/Resultater";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -47,12 +48,7 @@ function App() {
         <Discipliner />
         <Resultater />
       </main>
-
-      <footer className="bg-white shadow-md mt-8 py-4">
-        <div className="container mx-auto px-4 text-center text-gray-600">
-          &copy; 2024 Your Company Name. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
